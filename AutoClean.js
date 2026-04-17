@@ -189,10 +189,8 @@ function paint() {
         g.move_to(cb.x + cb.w + 6, cb.y + cb.h - 2);
         g.show_text(cb.label);
 
-        // Second line for long labels
+        // Second line for long labels (same style)
         if (cb.label2) {
-            setColor(g, PAL.textSec);
-            g.set_font_size(9);
             g.move_to(cb.x + cb.w + 6, cb.y + cb.h + 9);
             g.show_text(cb.label2);
         }
