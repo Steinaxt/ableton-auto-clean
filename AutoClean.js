@@ -37,38 +37,41 @@ var H = 168;
 // ─── Geometry ────────────────────────────────────────────────────────────────
 
 // Header height
-var HDR_H = 22;
+var HDR_H = 24;
 
 // Toggle switch dimensions
-var TGL_W = 22;
-var TGL_H = 12;
+var TGL_W = 26;
+var TGL_H = 14;
+
+// Row spacing
+var ROW_H = 18;
 
 // Sections arranged in two columns (A: CLIPS + COLOR, B: TRACKS) + CLEAN right
 var sections = [
-    { x: 8,   y: HDR_H + 14, w: 112, h: 42, label: "CLIPS" },
-    { x: 8,   y: HDR_H + 62, w: 112, h: 42, label: "COLOR" },
-    { x: 126, y: HDR_H + 14, w: 112, h: 74, label: "TRACKS" }
+    { x: 8,   y: 28,  w: 116, h: 50, label: "CLIPS" },
+    { x: 8,   y: 82,  w: 116, h: 50, label: "COLOR" },
+    { x: 130, y: 28,  w: 116, h: 104, label: "TRACKS" }
 ];
 
 var cbs = [
     // Col A — CLIPS
-    { x:14,  y:HDR_H+28,  w:TGL_W, h:TGL_H, key:"deleteClips",          label:"Muted clips",
+    { x:16,  y:42,   w:TGL_W, h:TGL_H, key:"deleteClips",          label:"Muted clips",
       tip:"Deletes muted clips (Session + Arrangement) on every track." },
-    { x:14,  y:HDR_H+42,  w:TGL_W, h:TGL_H, key:"deleteEmptyClips",     label:"Empty clips",
+    { x:16,  y:60,   w:TGL_W, h:TGL_H, key:"deleteEmptyClips",     label:"Empty clips",
       tip:"Deletes 0-length clips and MIDI clips without notes." },
     // Col A — COLOR
-    { x:14,  y:HDR_H+76,  w:TGL_W, h:TGL_H, key:"recolorGroupChildren", label:"Group children",
+    { x:16,  y:96,   w:TGL_W, h:TGL_H, key:"recolorGroupChildren", label:"Group children",
       tip:"Colors tracks inside a group with the group color." },
-    { x:14,  y:HDR_H+90,  w:TGL_W, h:TGL_H, key:"recolorGroupClips",    label:"Clips in groups",
+    { x:16,  y:114,  w:TGL_W, h:TGL_H, key:"recolorGroupClips",    label:"Clips in groups",
       tip:"Colors clips on grouped tracks with the group color." },
     // Col B — TRACKS
-    { x:132, y:HDR_H+28,  w:TGL_W, h:TGL_H, key:"deleteBypassed",       label:"Bypassed plugins",
+    { x:138, y:42,   w:TGL_W, h:TGL_H, key:"deleteBypassed",       label:"Bypassed plugins",
       tip:"Deletes off devices (skips ones with on/off automation)." },
-    { x:132, y:HDR_H+42,  w:TGL_W, h:TGL_H, key:"deleteMutedTracks",    label:"Muted tracks",
+    { x:138, y:60,   w:TGL_W, h:TGL_H, key:"deleteMutedTracks",    label:"Muted tracks",
       tip:"Deletes muted tracks. Group tracks are preserved." },
-    { x:132, y:HDR_H+56,  w:TGL_W, h:TGL_H, key:"deleteEmptyGroups",    label:"Muted/empty groups",
+    { x:138, y:78,   w:TGL_W, h:TGL_H, key:"deleteEmptyGroups",    label:"Muted/empty groups",
       tip:"Deletes muted groups and groups where all tracks are muted or empty." },
-    { x:132, y:HDR_H+70,  w:TGL_W, h:TGL_H, key:"deleteTracks",         label:"Unused tracks",
+    { x:138, y:96,   w:TGL_W, h:TGL_H, key:"deleteTracks",         label:"Unused tracks",
       tip:"Deletes tracks with no clips and no incoming routing." }
 ];
 
@@ -80,9 +83,9 @@ var DEVICE_TIP =
 var ALL_TIP = "Toggle all cleanup options at once.";
 var CLEAN_TIP = "Run every enabled cleanup phase. Undo with Cmd/Ctrl+Z.";
 
-var allBox   = { x:296,  y:6,  w:TGL_W, h:TGL_H };
-var btnRect  = { x:246, y:HDR_H + 26, w:84, h:84, r:12 };
-var STATUS_Y = 158;
+var allBox   = { x:300,  y:6,  w:TGL_W, h:TGL_H };
+var btnRect  = { x:252, y:28, w:82, h:104, r:14 };
+var STATUS_Y = 160;
 
 // Button press state
 var btnPressed = false;
@@ -123,25 +126,25 @@ function paint() {
 
     // Brand: "AUTOCLEAN"
     g.select_font_face("Arial Bold");
-    g.set_font_size(11);
+    g.set_font_size(12);
     setColor(g, PAL.accent);
-    g.move_to(8, 15);
+    g.move_to(8, 16);
     g.text_path("AUTOCLEAN");
     g.fill();
 
     // "by Living Electronics"
     g.select_font_face("Arial");
-    g.set_font_size(8);
+    g.set_font_size(9);
     setColor(g, PAL.textSec);
-    g.move_to(82, 15);
+    g.move_to(90, 16);
     g.text_path("by Living Electronics");
     g.fill();
 
     // "All" toggle in header (right side)
     setColor(g, PAL.textSec);
     g.select_font_face("Arial");
-    g.set_font_size(8);
-    g.move_to(allBox.x - 18, allBox.y + allBox.h - 2);
+    g.set_font_size(9);
+    g.move_to(allBox.x - 20, allBox.y + allBox.h - 2);
     g.text_path("All");
     g.fill();
     drawToggle(g, allBox.x, allBox.y, allBox.w, allBox.h, allSelected());
@@ -155,11 +158,11 @@ function paint() {
     for (var k = 0; k < sections.length; k++) {
         var sec = sections[k];
         // Panel background
-        drawRoundedRect(g, sec.x, sec.y, sec.w, sec.h, 5);
+        drawRoundedRect(g, sec.x, sec.y, sec.w, sec.h, 6);
         setColor(g, PAL.panelBg);
         g.fill();
         // Panel border
-        drawRoundedRect(g, sec.x, sec.y, sec.w, sec.h, 5);
+        drawRoundedRect(g, sec.x, sec.y, sec.w, sec.h, 6);
         setColor(g, PAL.panelBord);
         g.set_line_width(0.5);
         g.stroke();
@@ -167,22 +170,22 @@ function paint() {
 
         // Section label
         g.select_font_face("Arial Bold");
-        g.set_font_size(8);
+        g.set_font_size(9);
         setColor(g, PAL.accent);
-        g.move_to(sec.x + 6, sec.y + 10);
+        g.move_to(sec.x + 8, sec.y + 11);
         g.text_path(sec.label);
         g.fill();
     }
 
     // ── Toggle switches + labels ──
     g.select_font_face("Arial");
-    g.set_font_size(9);
+    g.set_font_size(10);
     for (var i = 0; i < cbs.length; i++) {
         var cb = cbs[i];
         drawToggle(g, cb.x, cb.y, cb.w, cb.h, !!opts[cb.key]);
 
         setColor(g, PAL.textPrim);
-        g.move_to(cb.x + cb.w + 5, cb.y + cb.h - 2);
+        g.move_to(cb.x + cb.w + 6, cb.y + cb.h - 2);
         g.text_path(cb.label);
         g.fill();
     }
@@ -195,27 +198,40 @@ function paint() {
     var br = btnRect.r;
 
     if (btnPressed || isRunning) {
-        // Pressed: shift down, darker gold, no top highlight
+        // Pressed: shift down 2px, darker gold, inset shadow
         drawRoundedRect(g, bx, by + 2, bw, bh - 2, br);
         setColor(g, PAL.accentDim);
         g.fill();
 
-        // Label
-        g.set_source_rgba(0.08, 0.08, 0.08, 1.0);
+        // Inset shadow at top
+        drawRoundedRect(g, bx + 1, by + 3, bw - 2, bh - 4, br - 1);
+        g.set_source_rgba(0, 0, 0, 0.2);
+        g.stroke();
+
+        // CLEAN text — centered
+        g.set_source_rgba(0.10, 0.08, 0.02, 1.0);
         g.select_font_face("Arial Bold");
-        g.set_font_size(16);
-        g.move_to(bx + 14, by + 2 + (bh - 2) / 2 + 5);
+        g.set_font_size(18);
+        var tx = bx + (bw - 56) / 2;
+        var ty = by + 2 + (bh - 2) / 2 + 6;
+        g.move_to(tx, ty);
         g.text_path("CLEAN");
         g.fill();
     } else {
-        // Normal: gold with gradient effect (lighter top half)
+        // Normal: solid gold with highlight and shadow for 3D look
+        // Bottom shadow (drawn first, slightly offset)
+        drawRoundedRect(g, bx, by + 2, bw, bh, br);
+        g.set_source_rgba(0, 0, 0, 0.3);
+        g.fill();
+
+        // Main button body
         drawRoundedRect(g, bx, by, bw, bh, br);
         setColor(g, PAL.accent);
         g.fill();
 
-        // Top highlight for gradient feel
+        // Top highlight band (lighter gold on upper third)
         g.save();
-        drawRoundedRect(g, bx, by, bw, bh / 2, br);
+        g.rectangle(bx, by, bw, bh * 0.4);
         g.clip();
         drawRoundedRect(g, bx, by, bw, bh, br);
         setColor(g, PAL.accentHi);
@@ -223,38 +239,38 @@ function paint() {
         g.restore();
 
         // Inner highlight stroke
-        drawRoundedRect(g, bx + 1, by + 1, bw - 2, bh - 2, br - 1);
-        g.set_source_rgba(1, 1, 1, 0.15);
+        drawRoundedRect(g, bx + 1.5, by + 1.5, bw - 3, bh - 3, br - 1);
+        g.set_source_rgba(1, 1, 1, 0.18);
         g.stroke();
 
-        // Subtle bottom shadow
+        // Outer edge
         drawRoundedRect(g, bx, by, bw, bh, br);
-        g.set_source_rgba(0, 0, 0, 0.15);
-        g.set_line_width(1.5);
+        g.set_source_rgba(0, 0, 0, 0.12);
         g.stroke();
-        g.set_line_width(1.0);
 
-        // Label
-        g.set_source_rgba(0.08, 0.08, 0.08, 1.0);
+        // CLEAN text — centered, dark on gold
+        g.set_source_rgba(0.10, 0.08, 0.02, 1.0);
         g.select_font_face("Arial Bold");
-        g.set_font_size(16);
-        g.move_to(bx + 14, by + bh / 2 + 5);
+        g.set_font_size(18);
+        var tx2 = bx + (bw - 56) / 2;
+        var ty2 = by + bh / 2 + 6;
+        g.move_to(tx2, ty2);
         g.text_path("CLEAN");
         g.fill();
     }
 
-    // ── Version number ──
+    // ── Version ──
     g.select_font_face("Arial");
-    g.set_font_size(7);
+    g.set_font_size(8);
     setColor(g, PAL.textSec);
-    g.move_to(bx + bw - 12, by + bh + 14);
+    g.move_to(bx + bw - 14, by + bh + 12);
     g.text_path("v2");
     g.fill();
 
     // ── Status / hover line ──
     setColor(g, hoverMsg ? PAL.textPrim : PAL.textSec);
     g.select_font_face("Arial");
-    g.set_font_size(8);
+    g.set_font_size(9);
     g.move_to(10, STATUS_Y);
     g.text_path(hoverMsg || statusMsg);
     g.fill();
@@ -313,8 +329,8 @@ function onclick(x, y, but, cmd, shift, capslock, option, ctrl) {
     if (isRunning) return;
 
     // Master "All" toggle (header area)
-    if (x >= allBox.x - 20 && x <= allBox.x + allBox.w + 4 &&
-        y >= allBox.y - 2 && y <= allBox.y + allBox.h + 2) {
+    if (x >= allBox.x - 24 && x <= allBox.x + allBox.w + 4 &&
+        y >= allBox.y - 2 && y <= allBox.y + allBox.h + 4) {
         setAll(!allSelected());
         mgraphics.redraw();
         return;
@@ -353,8 +369,8 @@ function onclick(x, y, but, cmd, shift, capslock, option, ctrl) {
 var lastHoverIdx = -99;
 
 function hoverIndex(x, y) {
-    if (x >= allBox.x - 20 && x <= allBox.x + allBox.w + 4 &&
-        y >= allBox.y - 2 && y <= allBox.y + allBox.h + 2) return -10;
+    if (x >= allBox.x - 24 && x <= allBox.x + allBox.w + 4 &&
+        y >= allBox.y - 2 && y <= allBox.y + allBox.h + 4) return -10;
     if (x >= btnRect.x && x <= btnRect.x + btnRect.w &&
         y >= btnRect.y && y <= btnRect.y + btnRect.h) return -20;
     for (var i = 0; i < cbs.length; i++) {
