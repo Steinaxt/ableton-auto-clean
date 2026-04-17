@@ -36,32 +36,39 @@ var H = 168;
 
 // ─── Geometry ────────────────────────────────────────────────────────────────
 
+// Header height
+var HDR_H = 22;
+
+// Toggle switch dimensions
+var TGL_W = 22;
+var TGL_H = 12;
+
 // Sections arranged in two columns (A: CLIPS + COLOR, B: TRACKS) + CLEAN right
 var sections = [
-    { x: 10,  y: 34,  label: "CLIPS" },
-    { x: 10,  y: 92,  label: "COLOR" },
-    { x: 130, y: 34,  label: "TRACKS" }
+    { x: 8,   y: HDR_H + 14, w: 112, h: 42, label: "CLIPS" },
+    { x: 8,   y: HDR_H + 62, w: 112, h: 42, label: "COLOR" },
+    { x: 126, y: HDR_H + 14, w: 112, h: 74, label: "TRACKS" }
 ];
 
 var cbs = [
     // Col A — CLIPS
-    { x:12,  y:50,  w:10, h:10, key:"deleteClips",          label:"Muted clips",
+    { x:14,  y:HDR_H+28,  w:TGL_W, h:TGL_H, key:"deleteClips",          label:"Muted clips",
       tip:"Deletes muted clips (Session + Arrangement) on every track." },
-    { x:12,  y:66,  w:10, h:10, key:"deleteEmptyClips",     label:"Empty clips",
+    { x:14,  y:HDR_H+42,  w:TGL_W, h:TGL_H, key:"deleteEmptyClips",     label:"Empty clips",
       tip:"Deletes 0-length clips and MIDI clips without notes." },
     // Col A — COLOR
-    { x:12,  y:108, w:10, h:10, key:"recolorGroupChildren", label:"Group children",
+    { x:14,  y:HDR_H+76,  w:TGL_W, h:TGL_H, key:"recolorGroupChildren", label:"Group children",
       tip:"Colors tracks inside a group with the group color." },
-    { x:12,  y:124, w:10, h:10, key:"recolorGroupClips",    label:"Clips in groups",
+    { x:14,  y:HDR_H+90,  w:TGL_W, h:TGL_H, key:"recolorGroupClips",    label:"Clips in groups",
       tip:"Colors clips on grouped tracks with the group color." },
     // Col B — TRACKS
-    { x:132, y:50,  w:10, h:10, key:"deleteBypassed",       label:"Bypassed plugins",
+    { x:132, y:HDR_H+28,  w:TGL_W, h:TGL_H, key:"deleteBypassed",       label:"Bypassed plugins",
       tip:"Deletes off devices (skips ones with on/off automation)." },
-    { x:132, y:66,  w:10, h:10, key:"deleteMutedTracks",    label:"Muted tracks",
+    { x:132, y:HDR_H+42,  w:TGL_W, h:TGL_H, key:"deleteMutedTracks",    label:"Muted tracks",
       tip:"Deletes muted tracks. Group tracks are preserved." },
-    { x:132, y:82,  w:10, h:10, key:"deleteEmptyGroups",    label:"Muted/empty groups",
+    { x:132, y:HDR_H+56,  w:TGL_W, h:TGL_H, key:"deleteEmptyGroups",    label:"Muted/empty groups",
       tip:"Deletes muted groups and groups where all tracks are muted or empty." },
-    { x:132, y:98,  w:10, h:10, key:"deleteTracks",         label:"Unused tracks",
+    { x:132, y:HDR_H+70,  w:TGL_W, h:TGL_H, key:"deleteTracks",         label:"Unused tracks",
       tip:"Deletes tracks with no clips and no incoming routing." }
 ];
 
@@ -73,21 +80,27 @@ var DEVICE_TIP =
 var ALL_TIP = "Toggle all cleanup options at once.";
 var CLEAN_TIP = "Run every enabled cleanup phase. Undo with Cmd/Ctrl+Z.";
 
-var allBox   = { x:12,  y:12,  w:10, h:10 };
-var btnRect  = { x:242, y:48,  w:88, h:88, r:12 };
-var STATUS_Y = 156;
+var allBox   = { x:296,  y:6,  w:TGL_W, h:TGL_H };
+var btnRect  = { x:246, y:HDR_H + 26, w:84, h:84, r:12 };
+var STATUS_Y = 158;
 
-// ─── Palette (Living Electronics cream + gold) ──────────────────────────────
+// Button press state
+var btnPressed = false;
+
+// ─── Palette (Dark & Gold) ──────────────────────────────────────────────────
 
 var PAL = {
-    bg:         [1.000, 0.996, 0.976, 1.0],   // #FFFEF9
-    textPrim:   [0.102, 0.102, 0.102, 1.0],   // #1A1A1A
-    textSec:    [0.290, 0.290, 0.290, 1.0],   // #4A4A4A
-    boxBg:      [0.980, 0.972, 0.945, 1.0],
-    boxBorder:  [0.500, 0.500, 0.500, 1.0],
+    bg:         [0.118, 0.118, 0.118, 1.0],   // #1E1E1E
+    panelBg:    [0.165, 0.165, 0.165, 1.0],   // #2A2A2A
+    panelBord:  [0.220, 0.220, 0.220, 1.0],   // #383838
+    textPrim:   [0.800, 0.800, 0.800, 1.0],   // #CCCCCC
+    textSec:    [0.533, 0.533, 0.533, 1.0],   // #888888
+    tglOff:     [0.250, 0.250, 0.250, 1.0],   // #404040
+    tglKnob:    [0.700, 0.700, 0.700, 1.0],   // #B3B3B3
     accent:     [0.831, 0.686, 0.216, 1.0],   // #D4AF37 gold
-    accentDim:  [0.650, 0.520, 0.140, 1.0],
-    divider:    [0.831, 0.686, 0.216, 0.45]
+    accentHi:   [0.920, 0.780, 0.340, 1.0],   // lighter gold (gradient top)
+    accentDim:  [0.600, 0.480, 0.120, 1.0],   // darker gold (pressed)
+    divider:    [0.831, 0.686, 0.216, 0.30]
 };
 
 // ─── Paint ───────────────────────────────────────────────────────────────────
@@ -103,81 +116,171 @@ function paint() {
     g.rectangle(0, 0, W, H);
     g.fill();
 
-    // Master "All" toggle (top-left)
-    drawCheckbox(g, allBox.x, allBox.y, allBox.w, allBox.h, allSelected());
-    setColor(g, PAL.textSec);
-    g.select_font_face("Arial");
-    g.set_font_size(10);
-    g.move_to(allBox.x + allBox.w + 6, allBox.y + allBox.h);
-    g.text_path("Select all");
+    // ── Header bar ──
+    setColor(g, PAL.panelBg);
+    g.rectangle(0, 0, W, HDR_H);
     g.fill();
 
-    // Section headers (gold, uppercase, with underline bar)
+    // Brand: "AUTOCLEAN"
     g.select_font_face("Arial Bold");
-    g.set_font_size(9);
+    g.set_font_size(11);
+    setColor(g, PAL.accent);
+    g.move_to(8, 15);
+    g.text_path("AUTOCLEAN");
+    g.fill();
+
+    // "by Living Electronics"
+    g.select_font_face("Arial");
+    g.set_font_size(8);
+    setColor(g, PAL.textSec);
+    g.move_to(82, 15);
+    g.text_path("by Living Electronics");
+    g.fill();
+
+    // "All" toggle in header (right side)
+    setColor(g, PAL.textSec);
+    g.select_font_face("Arial");
+    g.set_font_size(8);
+    g.move_to(allBox.x - 18, allBox.y + allBox.h - 2);
+    g.text_path("All");
+    g.fill();
+    drawToggle(g, allBox.x, allBox.y, allBox.w, allBox.h, allSelected());
+
+    // Gold separator line
+    setColor(g, PAL.divider);
+    g.rectangle(0, HDR_H, W, 1);
+    g.fill();
+
+    // ── Section panels ──
     for (var k = 0; k < sections.length; k++) {
         var sec = sections[k];
-        setColor(g, PAL.accent);
-        g.move_to(sec.x, sec.y);
-        g.text_path(sec.label);
+        // Panel background
+        drawRoundedRect(g, sec.x, sec.y, sec.w, sec.h, 5);
+        setColor(g, PAL.panelBg);
         g.fill();
-        setColor(g, PAL.divider);
-        g.rectangle(sec.x, sec.y + 3, 100, 1);
+        // Panel border
+        drawRoundedRect(g, sec.x, sec.y, sec.w, sec.h, 5);
+        setColor(g, PAL.panelBord);
+        g.set_line_width(0.5);
+        g.stroke();
+        g.set_line_width(1.0);
+
+        // Section label
+        g.select_font_face("Arial Bold");
+        g.set_font_size(8);
+        setColor(g, PAL.accent);
+        g.move_to(sec.x + 6, sec.y + 10);
+        g.text_path(sec.label);
         g.fill();
     }
 
-    // Checkboxes + labels
+    // ── Toggle switches + labels ──
     g.select_font_face("Arial");
-    g.set_font_size(10);
+    g.set_font_size(9);
     for (var i = 0; i < cbs.length; i++) {
         var cb = cbs[i];
-        drawCheckbox(g, cb.x, cb.y, cb.w, cb.h, !!opts[cb.key]);
+        drawToggle(g, cb.x, cb.y, cb.w, cb.h, !!opts[cb.key]);
 
         setColor(g, PAL.textPrim);
-        g.move_to(cb.x + cb.w + 6, cb.y + cb.h - 1);
+        g.move_to(cb.x + cb.w + 5, cb.y + cb.h - 2);
         g.text_path(cb.label);
         g.fill();
     }
 
-    // CLEAN button (rounded, gold)
-    drawRoundedRect(g, btnRect.x, btnRect.y, btnRect.w, btnRect.h, btnRect.r);
-    setColor(g, isRunning ? PAL.accentDim : PAL.accent);
+    // ── CLEAN button ──
+    var bx = btnRect.x;
+    var by = btnRect.y;
+    var bw = btnRect.w;
+    var bh = btnRect.h;
+    var br = btnRect.r;
+
+    if (btnPressed || isRunning) {
+        // Pressed: shift down, darker gold, no top highlight
+        drawRoundedRect(g, bx, by + 2, bw, bh - 2, br);
+        setColor(g, PAL.accentDim);
+        g.fill();
+
+        // Label
+        g.set_source_rgba(0.08, 0.08, 0.08, 1.0);
+        g.select_font_face("Arial Bold");
+        g.set_font_size(16);
+        g.move_to(bx + 14, by + 2 + (bh - 2) / 2 + 5);
+        g.text_path("CLEAN");
+        g.fill();
+    } else {
+        // Normal: gold with gradient effect (lighter top half)
+        drawRoundedRect(g, bx, by, bw, bh, br);
+        setColor(g, PAL.accent);
+        g.fill();
+
+        // Top highlight for gradient feel
+        g.save();
+        drawRoundedRect(g, bx, by, bw, bh / 2, br);
+        g.clip();
+        drawRoundedRect(g, bx, by, bw, bh, br);
+        setColor(g, PAL.accentHi);
+        g.fill();
+        g.restore();
+
+        // Inner highlight stroke
+        drawRoundedRect(g, bx + 1, by + 1, bw - 2, bh - 2, br - 1);
+        g.set_source_rgba(1, 1, 1, 0.15);
+        g.stroke();
+
+        // Subtle bottom shadow
+        drawRoundedRect(g, bx, by, bw, bh, br);
+        g.set_source_rgba(0, 0, 0, 0.15);
+        g.set_line_width(1.5);
+        g.stroke();
+        g.set_line_width(1.0);
+
+        // Label
+        g.set_source_rgba(0.08, 0.08, 0.08, 1.0);
+        g.select_font_face("Arial Bold");
+        g.set_font_size(16);
+        g.move_to(bx + 14, by + bh / 2 + 5);
+        g.text_path("CLEAN");
+        g.fill();
+    }
+
+    // ── Version number ──
+    g.select_font_face("Arial");
+    g.set_font_size(7);
+    setColor(g, PAL.textSec);
+    g.move_to(bx + bw - 12, by + bh + 14);
+    g.text_path("v2");
     g.fill();
 
-    // Subtle inner highlight
-    drawRoundedRect(g, btnRect.x + 1, btnRect.y + 1, btnRect.w - 2, btnRect.h - 2, btnRect.r - 1);
-    g.set_source_rgba(1, 1, 1, 0.25);
-    g.stroke();
-
-    // CLEAN label — dark text on gold
-    setColor(g, PAL.textPrim);
-    g.select_font_face("Arial Bold");
-    g.set_font_size(18);
-    g.move_to(btnRect.x + 15, btnRect.y + btnRect.h / 2 + 6);
-    g.text_path("CLEAN");
-    g.fill();
-
-    // Status / hover line (hover tip takes priority while idle)
+    // ── Status / hover line ──
     setColor(g, hoverMsg ? PAL.textPrim : PAL.textSec);
     g.select_font_face("Arial");
-    g.set_font_size(9);
+    g.set_font_size(8);
     g.move_to(10, STATUS_Y);
     g.text_path(hoverMsg || statusMsg);
     g.fill();
 }
 
-function drawCheckbox(g, x, y, w, h, checked) {
-    setColor(g, PAL.boxBg);
-    g.rectangle(x, y, w, h);
+function drawToggle(g, x, y, w, h, on) {
+    var r = h / 2;
+    // Track
+    drawPill(g, x, y, w, h);
+    setColor(g, on ? PAL.accent : PAL.tglOff);
     g.fill();
-    setColor(g, checked ? PAL.accent : PAL.boxBorder);
-    g.rectangle(x, y, w, h);
-    g.stroke();
-    if (checked) {
-        setColor(g, PAL.accent);
-        g.rectangle(x + 2, y + 2, w - 4, h - 4);
-        g.fill();
-    }
+
+    // Knob
+    var knobR = r - 2;
+    var knobX = on ? (x + w - r) : (x + r);
+    var knobY = y + r;
+    g.arc(knobX, knobY, knobR, 0, Math.PI * 2);
+    setColor(g, on ? [1, 1, 1, 0.95] : PAL.tglKnob);
+    g.fill();
+}
+
+function drawPill(g, x, y, w, h) {
+    var r = h / 2;
+    g.arc(x + r, y + r, r, Math.PI * 0.5, Math.PI * 1.5);
+    g.arc(x + w - r, y + r, r, Math.PI * 1.5, Math.PI * 0.5);
+    g.close_path();
 }
 
 function drawRoundedRect(g, x, y, w, h, r) {
@@ -209,26 +312,29 @@ function setAll(v) {
 function onclick(x, y, but, cmd, shift, capslock, option, ctrl) {
     if (isRunning) return;
 
-    // Master "All" toggle
-    if (x >= allBox.x && x <= allBox.x + 80 &&
+    // Master "All" toggle (header area)
+    if (x >= allBox.x - 20 && x <= allBox.x + allBox.w + 4 &&
         y >= allBox.y - 2 && y <= allBox.y + allBox.h + 2) {
         setAll(!allSelected());
         mgraphics.redraw();
         return;
     }
 
-    // Individual checkboxes (row hit: from checkbox to ~110px right)
+    // Individual toggles (row hit: from toggle to end of label)
     for (var i = 0; i < cbs.length; i++) {
         var cb = cbs[i];
-        if (x >= cb.x && x <= cb.x + 110 && y >= cb.y - 1 && y <= cb.y + cb.h + 1) {
+        if (x >= cb.x && x <= cb.x + 100 && y >= cb.y - 1 && y <= cb.y + cb.h + 1) {
             opts[cb.key] = !opts[cb.key];
             mgraphics.redraw();
             return;
         }
     }
 
+    // CLEAN button — visual press feedback
     if (x >= btnRect.x && x <= btnRect.x + btnRect.w &&
         y >= btnRect.y && y <= btnRect.y + btnRect.h) {
+        btnPressed = true;
+        mgraphics.redraw();
         post("[AutoClean] CLEAN pressed\n");
         try {
             runClean();
@@ -236,8 +342,9 @@ function onclick(x, y, but, cmd, shift, capslock, option, ctrl) {
             post("[AutoClean] ERROR: " + e.message + "\n");
             statusMsg = "Error — see Max console";
             isRunning = false;
-            mgraphics.redraw();
         }
+        btnPressed = false;
+        mgraphics.redraw();
     }
 }
 
@@ -246,13 +353,13 @@ function onclick(x, y, but, cmd, shift, capslock, option, ctrl) {
 var lastHoverIdx = -99;
 
 function hoverIndex(x, y) {
-    if (x >= allBox.x && x <= allBox.x + 80 &&
+    if (x >= allBox.x - 20 && x <= allBox.x + allBox.w + 4 &&
         y >= allBox.y - 2 && y <= allBox.y + allBox.h + 2) return -10;
     if (x >= btnRect.x && x <= btnRect.x + btnRect.w &&
         y >= btnRect.y && y <= btnRect.y + btnRect.h) return -20;
     for (var i = 0; i < cbs.length; i++) {
         var cb = cbs[i];
-        if (x >= cb.x && x <= cb.x + 110 && y >= cb.y - 1 && y <= cb.y + cb.h + 1) return i;
+        if (x >= cb.x && x <= cb.x + 100 && y >= cb.y - 1 && y <= cb.y + cb.h + 1) return i;
     }
     return -1;
 }
