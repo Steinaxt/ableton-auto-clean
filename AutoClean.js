@@ -659,30 +659,54 @@ function groupChildrenAllEmpty(liveSet, groupIndex) {
     var groupTrack = new LiveAPI("live_set tracks " + groupIndex);
     var groupId    = parseInt(groupTrack.id);
     var trackCount = parseInt(liveSet.getcount("tracks"));
-    var foundChild = false;
 
-    // Children are consecutive tracks after the group whose group_track matches.
+    // Collect all tracks that belong to this group (any nesting depth).
+    // A track belongs to this group if walking up the group_track chain
+    // eventually reaches groupId.
+    var leafTracks = [];
+
     for (var t = groupIndex + 1; t < trackCount; t++) {
         var child = new LiveAPI("live_set tracks " + t);
 
-        // Stop when we leave this group (hit another group or a track with a different parent).
-        var parentId = parseGroupId(child.get("group_track"));
-        if (parentId !== groupId) break;
+        if (!isDescendantOf(child, groupId)) break;
 
-        // Skip nested sub-groups — only inspect leaf tracks.
+        // Only inspect leaf tracks (not sub-group headers).
         if (getInt(child, "is_foldable") === 1) continue;
 
-        foundChild = true;
-
-        // If the child is muted, it counts as "empty" for our purposes.
-        if (getInt(child, "mute") === 1) continue;
-
-        // If the child has any clips it is NOT empty.
-        if (trackHasClips(child, t)) return false;
+        leafTracks.push(t);
     }
 
-    // Only delete if the group actually had children (safety check).
-    return foundChild;
+    // Safety: don't delete groups with no detected children.
+    if (leafTracks.length === 0) return false;
+
+    for (var i = 0; i < leafTracks.length; i++) {
+        var idx = leafTracks[i];
+        var leaf = new LiveAPI("live_set tracks " + idx);
+
+        // Muted tracks count as "empty".
+        if (getInt(leaf, "mute") === 1) continue;
+
+        // Any clips → group is NOT empty.
+        if (trackHasClips(leaf, idx)) return false;
+    }
+
+    return true;
+}
+
+// Walk up the group_track chain to check if a track is inside the given group.
+function isDescendantOf(track, ancestorId) {
+    var seen = {};
+    var current = track;
+    for (var depth = 0; depth < 20; depth++) {
+        var pid = parseGroupId(current.get("group_track"));
+        if (!pid || pid === 0) return false;
+        if (pid === ancestorId) return true;
+        if (seen[pid]) return false;  // cycle guard
+        seen[pid] = true;
+        current = new LiveAPI("id " + pid);
+        if (!current || parseInt(current.id) === 0) return false;
+    }
+    return false;
 }
 
 // ─── Phase: Recolor ──────────────────────────────────────────────────────────
