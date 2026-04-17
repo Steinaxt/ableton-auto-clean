@@ -65,13 +65,13 @@ var cbs = [
     { x:16,  y:114,  w:TGL_W, h:TGL_H, key:"recolorGroupClips",    label:"Clips in groups",
       tip:"Colors clips on grouped tracks with the group color." },
     // Col B — TRACKS
-    { x:138, y:42,   w:TGL_W, h:TGL_H, key:"deleteBypassed",       label:"Bypassed plugins",
+    { x:138, y:42,   w:TGL_W, h:TGL_H, key:"deleteBypassed",       label:"Bypassed",
       tip:"Deletes off devices (skips ones with on/off automation)." },
-    { x:138, y:60,   w:TGL_W, h:TGL_H, key:"deleteMutedTracks",    label:"Muted tracks",
+    { x:138, y:60,   w:TGL_W, h:TGL_H, key:"deleteMutedTracks",    label:"Muted trks",
       tip:"Deletes muted tracks. Group tracks are preserved." },
-    { x:138, y:78,   w:TGL_W, h:TGL_H, key:"deleteEmptyGroups",    label:"Muted/empty groups",
+    { x:138, y:78,   w:TGL_W, h:TGL_H, key:"deleteEmptyGroups",    label:"Empty grps",
       tip:"Deletes muted groups and groups where all tracks are muted or empty." },
-    { x:138, y:96,   w:TGL_W, h:TGL_H, key:"deleteTracks",         label:"Unused tracks",
+    { x:138, y:96,   w:TGL_W, h:TGL_H, key:"deleteTracks",         label:"Unused trks",
       tip:"Deletes tracks with no clips and no incoming routing." }
 ];
 
@@ -198,65 +198,49 @@ function paint() {
     var br = btnRect.r;
 
     if (btnPressed || isRunning) {
-        // Pressed: shift down 2px, darker gold, inset shadow
+        // Pressed: shift down 2px, darker gold
         drawRoundedRect(g, bx, by + 2, bw, bh - 2, br);
         setColor(g, PAL.accentDim);
         g.fill();
 
-        // Inset shadow at top
+        // Subtle inset border
         drawRoundedRect(g, bx + 1, by + 3, bw - 2, bh - 4, br - 1);
-        g.set_source_rgba(0, 0, 0, 0.2);
+        g.set_source_rgba(0, 0, 0, 0.25);
         g.stroke();
 
-        // CLEAN text — centered
-        g.set_source_rgba(0.10, 0.08, 0.02, 1.0);
+        // CLEAN text — centered, dark on gold
         g.select_font_face("Arial Bold");
         g.set_font_size(18);
-        var tx = bx + (bw - 56) / 2;
-        var ty = by + 2 + (bh - 2) / 2 + 6;
-        g.move_to(tx, ty);
-        g.text_path("CLEAN");
-        g.fill();
+        setColor(g, PAL.bg);
+        g.move_to(bx + 12, by + 2 + (bh - 2) / 2 + 7);
+        g.show_text("CLEAN");
     } else {
-        // Normal: solid gold with highlight and shadow for 3D look
-        // Bottom shadow (drawn first, slightly offset)
-        drawRoundedRect(g, bx, by + 2, bw, bh, br);
+        // Drop shadow behind button
+        drawRoundedRect(g, bx + 1, by + 2, bw, bh, br);
         g.set_source_rgba(0, 0, 0, 0.3);
         g.fill();
 
-        // Main button body
+        // Main button body — solid gold
         drawRoundedRect(g, bx, by, bw, bh, br);
         setColor(g, PAL.accent);
         g.fill();
 
-        // Top highlight band (lighter gold on upper third)
-        g.save();
-        g.rectangle(bx, by, bw, bh * 0.4);
-        g.clip();
-        drawRoundedRect(g, bx, by, bw, bh, br);
-        setColor(g, PAL.accentHi);
-        g.fill();
-        g.restore();
-
-        // Inner highlight stroke
-        drawRoundedRect(g, bx + 1.5, by + 1.5, bw - 3, bh - 3, br - 1);
-        g.set_source_rgba(1, 1, 1, 0.18);
+        // Top highlight line for 3D depth
+        drawRoundedRect(g, bx + 2, by + 2, bw - 4, bh / 2, br - 1);
+        g.set_source_rgba(1, 1, 1, 0.15);
         g.stroke();
 
-        // Outer edge
+        // Outer border
         drawRoundedRect(g, bx, by, bw, bh, br);
-        g.set_source_rgba(0, 0, 0, 0.12);
+        g.set_source_rgba(0, 0, 0, 0.15);
         g.stroke();
 
         // CLEAN text — centered, dark on gold
-        g.set_source_rgba(0.10, 0.08, 0.02, 1.0);
         g.select_font_face("Arial Bold");
         g.set_font_size(18);
-        var tx2 = bx + (bw - 56) / 2;
-        var ty2 = by + bh / 2 + 6;
-        g.move_to(tx2, ty2);
-        g.text_path("CLEAN");
-        g.fill();
+        setColor(g, PAL.bg);
+        g.move_to(bx + 12, by + bh / 2 + 7);
+        g.show_text("CLEAN");
     }
 
     // ── Version ──
